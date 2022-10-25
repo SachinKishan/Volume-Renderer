@@ -67,8 +67,8 @@ vec3 integrate(ray r, const std::vector<std::unique_ptr<Object>>& objects)
 	int ns = std::ceil((isect.t1 - isect.t0) / step_size);
 	step_size = (isect.t1 - isect.t0) / ns;
 
-	//vec3 light_dir{ 0, -1, 0 };
-	vec3 light_dir(-0.315798, 0.719361, 0.618702);
+	vec3 light_dir{ 0, 0, 0 };
+	//vec3 light_dir(-0.315798, 0.719361, 0.618702);
 	vec3 light_color{ 1.3, 0.3, 0.9 };
 	IsectData isect_vol;
 
@@ -135,39 +135,30 @@ int main() {
 	// World
 	//TODO: Make this easier
 
+	vec3 trans(0, 0, 0);
+	trans[0] = -trans.x();
+	TranslationMatrix translation(trans);
+	ScaleMatrix scale(15);
+	scale.multVecMatrix(minPos, minPos);
+	scale.multVecMatrix(maxPos, maxPos);
+	RotationMatrixX xRot(0);
+	RotationMatrixY yRot(0);
+	RotationMatrixZ zRot(0);
+
+	
 
 
-	//ScaleMatrix scale(15);
-	//scale.multVecMatrix(minPos, minPos);
-	//scale.multVecMatrix(maxPos, maxPos);
-
-	RotationMatrixX xRot(45);
-	RotationMatrixY yRot(45);
-	RotationMatrixZ zRot(45);
-
-	//xRot.multVecMatrix(minPos,minPos);
-	//xRot.multVecMatrix(maxPos,maxPos);
-	//yRot.multVecMatrix(minPos, minPos);
-	//yRot.multVecMatrix(maxPos,maxPos);
-	//zRot.multVecMatrix(minPos,minPos);
-	//zRot.multVecMatrix(maxPos,maxPos);
-
+	Matrix44<float> transformationMat=translation*xRot*yRot*zRot;
+	transformationMat.invert();
 	// allocate memory to read the data from the cache file
 	size_t numVoxels = grid->dimension * grid->dimension * grid->dimension;
 	// feel free to use a unique_ptr if you want to (the sample program does)
 	grid->density = new float[numVoxels];
-	//std::ifstream cacheFile("./mrbrain-8bit/mrbrain-8bit035.tif", std::ios::binary);
-	//TIFF* tif = TIFFOpen("./mrbrain-8bit/mrbrain-8bit035.tif", "r");
-	// read the density values in memory
-	//cacheFile.read((char*)grid->density, sizeof(float) * numVoxels);
-	//if (!tif){std::cout << "file not found"; return 0;}
-	//TIFFClose(tif);
-
 	/*for (int i = 0; i < 127; i++)
 	{
 		std::cout << grid->density[i];
 	}*/
-	/*
+	
 
 	std::unique_ptr<Sphere> sph = std::make_unique<Sphere>(vec3(0, 0, -4), vec3(1.0, 1.0, 1.0), 1, 0.75f);
 	std::vector<std::unique_ptr<Object>> world;
@@ -195,7 +186,8 @@ int main() {
 	
 	//lookat matrix
 	Matrix44<float> look;
-	look.lookat(vec3(-10,0,-25), vec3(0, 0, 0), vec3(0, 1, 0));
+	vec3 camPos(20, 9, 10);
+	look.lookat(vec3(-camPos.x(), camPos.y(), -camPos.z()), trans, vec3(0, 1, 0));
 
 	//image resizing
 	image.resize(image_width * image_height * 4);
@@ -211,7 +203,12 @@ int main() {
 			vec3 rayDir(lower_left_corner + u * horizontal + v * vertical - origin);
 			rayDir[2] = -1;
 			rayOrigin = look.multiplyVectorMatrix(rayOrigin);
+
+			rayOrigin = transformationMat.multiplyVectorMatrix(rayOrigin);
+
 			rayDir = look.multiplyVectorMatrix(rayDir);
+			rayDir = transformationMat.multiplyVectorMatrix(rayDir);
+
 			rayDir = rayDir - rayOrigin;
 
 			rayDir = unit_vector(rayDir);
@@ -239,5 +236,5 @@ int main() {
 #pragma endregion
 		}
 	}
-	encodeOneStep(filename, image, image_width, image_height);*/
+	encodeOneStep(filename, image, image_width, image_height);
 }

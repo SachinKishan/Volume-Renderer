@@ -229,17 +229,17 @@ public:
 
     void lookat(vec3 from, vec3 to, vec3 up)
     {
-        vec3 forward = from - to;
+        vec3 forward = to-from;
         forward=unit_vector(forward);
-        
+        //forward = -forward;
         vec3 right =unit_vector(cross(up, forward));
         
-        vec3 newup = cross(forward, right);
+        vec3 newup =unit_vector(cross(forward, right));
 
         x[0][0] = right.x(), x[0][1] = right.y(), x[0][2] = right.z();
         x[1][0] = newup.x(), x[1][1] = newup.y(), x[1][2] = newup.z();
         x[2][0] = forward.x(), x[2][1] = forward.y(), x[2][2] = forward.z();
-        x[3][0] = from.z(), x[3][1] = from.y(), x[3][2] = from.z();
+        x[3][0] = -from.x(), x[3][1] = -from.y(), x[3][2] = -from.z();
     }
 };
 
